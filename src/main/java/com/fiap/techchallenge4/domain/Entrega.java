@@ -1,22 +1,16 @@
 package com.fiap.techchallenge4.domain;
 
-import lombok.Getter;
-
 import java.util.Objects;
 
-@Getter
-public class Entrega {
-    private Long idDoPedido;
-    private String cpfCliente;
-    private Long ean;
-    private Long quantidadeDoProduto;
-
+public record Entrega(
+        Long idDoPedido,
+        String cpfCliente,
+        Long ean,
+        Long quantidadeDoProduto
+) {
     public static final String REGEX_CPF = "(^\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}$)";
 
-    public Entrega(final Long idDoPedido,
-                   final String cpfCliente,
-                   final Long ean,
-                   final Long quantidadeDoProduto) {
+    public Entrega {
         if (Objects.isNull(idDoPedido) || idDoPedido <= 0) {
             throw new IllegalArgumentException("ID DO PEDIDO NAO PODE SER NULO OU MENOR E IGUAL A ZERO!");
         }
@@ -36,10 +30,6 @@ public class Entrega {
             throw new IllegalArgumentException("QUANTIDADE NAO PODE SER NULO OU MENOR E IGUAL A ZERO E MAIOR QUE 1000!");
         }
 
-        this.idDoPedido = idDoPedido;
-        this.cpfCliente = cpfCliente;
-        this.ean = ean;
-        this.quantidadeDoProduto = quantidadeDoProduto;
     }
 
 }

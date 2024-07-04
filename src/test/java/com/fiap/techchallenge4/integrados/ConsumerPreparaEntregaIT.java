@@ -152,6 +152,7 @@ public class ConsumerPreparaEntregaIT {
     public void prepara_salvaNaBaseDeDados_entregaJaEstaSendoPreparada() throws ExecutionException, InterruptedException {
 
         this.repositoryEntrega.save(EntregaEntity.builder()
+                .idDoPedido(1L)
                 .cpfCliente("92084815061")
                 .ean(1234567890L)
                 .quantidadeDoProduto(10L)
