@@ -3,6 +3,7 @@ package com.fiap.techchallenge4.unitario;
 import com.fiap.techchallenge4.domain.InformacoesDoEndereco;
 import com.fiap.techchallenge4.domain.StatusEntregaControllerEnum;
 import com.fiap.techchallenge4.domain.StatusEntregaEnum;
+import com.fiap.techchallenge4.infrasctructure.consumer.response.CancelaEntregaDTO;
 import com.fiap.techchallenge4.infrasctructure.consumer.response.PreparaEntregaDTO;
 import com.fiap.techchallenge4.infrasctructure.entrega.model.EntregaEntity;
 import com.fiap.techchallenge4.infrasctructure.entrega.repository.EntregaRepository;
@@ -513,6 +514,102 @@ public class EntregaUseCaseTest {
         verify(streamBridge, times(0)).send(Mockito.any(), Mockito.any());
     }
 
+    @Test
+    public void cancela_salvaNaBaseDeDados() {
+        // preparação
+        var repository = Mockito.mock(EntregaRepository.class);
+        var serviceEntregador = Mockito.mock(EntregadorUseCase.class);
+        var streamBridge = Mockito.mock(StreamBridge.class);
+
+        Mockito.when(repository.findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any()))
+                .thenReturn(
+                        Optional.of(
+                                new EntregaEntity(
+                                        1L,
+                                        "92084815061",
+                                        7894900011517L,
+                                        100L,
+                                        "67539918080",
+                                        null,
+                                        null,
+                                        StatusEntregaEnum.CRIADO,
+                                        LocalDateTime.now()
+                                )
+                        )
+                );
+        Mockito.when(repository.save(Mockito.any()))
+                .thenReturn(
+                        new EntregaEntity(
+                                1L,
+                                "92084815061",
+                                7894900011517L,
+                                100L,
+                                "67539918080",
+                                null,
+                                null,
+                                StatusEntregaEnum.CANCELADO,
+                                LocalDateTime.now()
+                        )
+                );
+
+        var service = new EntregaUseCaseImpl(repository, serviceEntregador, streamBridge);
+
+        // execução
+        service.cancela(
+                new CancelaEntregaDTO(
+                        1L
+                )
+        );
+
+        // avaliação
+        verify(repository, times(1)).findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any());
+        verify(repository, times(1)).save(Mockito.any());
+        verifyNoInteractions(serviceEntregador);
+        verifyNoInteractions(streamBridge);
+    }
+
+    @Test
+    public void cancela_naoSalvaNaBaseDeDados_entregaJaEstaSendoPreparada() {
+        // preparação
+        var repository = Mockito.mock(EntregaRepository.class);
+        var serviceEntregador = Mockito.mock(EntregadorUseCase.class);
+        var streamBridge = Mockito.mock(StreamBridge.class);
+
+        Mockito.when(repository.findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any()))
+                .thenReturn(
+                        Optional.empty()
+                );
+        Mockito.when(repository.save(Mockito.any()))
+                .thenReturn(
+                        new EntregaEntity(
+                                1L,
+                                "92084815061",
+                                7894900011517L,
+                                100L,
+                                "67539918080",
+                                null,
+                                null,
+                                StatusEntregaEnum.EM_TRANSPORTE,
+                                LocalDateTime.now()
+                        )
+                );
+
+        var service = new EntregaUseCaseImpl(repository, serviceEntregador, streamBridge);
+
+        // execução
+        service.cancela(
+                new CancelaEntregaDTO(
+                        1L
+                )
+        );
+
+        // avaliação
+        verify(repository, times(1)).findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any());
+        verify(repository, times(0)).save(Mockito.any());
+        verifyNoInteractions(serviceEntregador);
+        verifyNoInteractions(streamBridge);
+    }
+
     @ParameterizedTest
     @MethodSource("requestValidandoCampos")
     public void prepara_camposInvalidos_naoSalvaNaBaseDeDados(Long idDoPedido,
@@ -620,6 +717,52 @@ public class EntregaUseCaseTest {
         verify(repository, times(0)).save(Mockito.any());
         verify(serviceEntregador, times(0)).escolhe();
         verify(streamBridge, times(0)).send(Mockito.any(), Mockito.any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {
+            -1000,
+            -1L,
+            0
+    })
+    public void cancela_camposInvalidos_naoSalvaNaBaseDeDados(Long idDoPedido) {
+        // preparação
+        var repository = Mockito.mock(EntregaRepository.class);
+        var serviceEntregador = Mockito.mock(EntregadorUseCase.class);
+        var streamBridge = Mockito.mock(StreamBridge.class);
+
+        Mockito.when(repository.findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any()))
+                .thenReturn(
+                        Optional.of(
+                                new EntregaEntity(
+                                        1L,
+                                        "92084815061",
+                                        7894900011517L,
+                                        100L,
+                                        "67539918080",
+                                        null,
+                                        null,
+                                        StatusEntregaEnum.CRIADO,
+                                        LocalDateTime.now()
+                                )
+                        )
+                );
+
+        var service = new EntregaUseCaseImpl(repository, serviceEntregador, streamBridge);
+
+        // execução e avaliação
+        var excecao = Assertions.assertThrows(RuntimeException.class, () -> {
+            service.cancela(
+                    new CancelaEntregaDTO(
+                            idDoPedido == -1000 ? null : idDoPedido
+                    )
+            );
+        });
+
+        verify(repository, times(0)).findByIdDoPedidoAndStatusEntrega(Mockito.any(), Mockito.any());
+        verify(repository, times(0)).save(Mockito.any());
+        verifyNoInteractions(serviceEntregador);
+        verifyNoInteractions(streamBridge);
     }
 
     private static Stream<Arguments> requestValidandoCampos() {

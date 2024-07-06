@@ -4,6 +4,7 @@ import com.fiap.techchallenge4.domain.Entrega;
 import com.fiap.techchallenge4.domain.IdPedido;
 import com.fiap.techchallenge4.domain.StatusEntregaControllerEnum;
 import com.fiap.techchallenge4.domain.StatusEntregaEnum;
+import com.fiap.techchallenge4.infrasctructure.consumer.response.CancelaEntregaDTO;
 import com.fiap.techchallenge4.infrasctructure.consumer.response.PreparaEntregaDTO;
 import com.fiap.techchallenge4.infrasctructure.entrega.controller.dto.AtualizaClienteDTO;
 import com.fiap.techchallenge4.infrasctructure.entrega.controller.dto.AtualizaPedidoDTO;
@@ -126,6 +127,31 @@ public class EntregaUseCaseImpl implements EntregaUseCase {
             System.err.println("Error= " + e);
             return false;
         }
+
+    }
+
+    @Override
+    public void cancela(CancelaEntregaDTO evento) {
+        System.err.println("OLA");
+        final var idDoPedidoObjeto = new IdPedido(evento.idDoPedido());
+
+        final var entregaNaBase = this.repository.findByIdDoPedidoAndStatusEntrega(idDoPedidoObjeto.numero(), StatusEntregaEnum.CRIADO);
+        if(entregaNaBase.isPresent()) {
+            final var entrega = entregaNaBase.get();
+            final var entregaEntity = EntregaEntity.builder()
+                    .idDoPedido(entrega.getIdDoPedido())
+                    .cpfCliente(entrega.getCpfCliente())
+                    .ean(entrega.getEan())
+                    .quantidadeDoProduto(entrega.getQuantidadeDoProduto())
+                    .cpfEntregador(entrega.getCpfEntregador())
+                    .statusEntrega(StatusEntregaEnum.CANCELADO)
+                    .dataDeCriacao(LocalDateTime.now())
+                    .build();
+
+            this.repository.save(entregaEntity);
+            return;
+        }
+        System.out.println("Entrega já esta sendo preparada ou ja foi cancelada");
 
     }
 

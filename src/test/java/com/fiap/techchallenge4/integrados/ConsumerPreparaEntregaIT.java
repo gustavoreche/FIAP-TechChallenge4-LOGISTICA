@@ -1,6 +1,5 @@
 package com.fiap.techchallenge4.integrados;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fiap.techchallenge4.infrasctructure.consumer.response.PreparaEntregaDTO;
 import com.fiap.techchallenge4.infrasctructure.entrega.model.EntregaEntity;
 import com.fiap.techchallenge4.infrasctructure.entrega.repository.EntregaRepository;
@@ -29,9 +28,6 @@ public class ConsumerPreparaEntregaIT {
 
     @Autowired
     EntregaRepository repositoryEntrega;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void inicializaLimpezaDoDatabase() {
